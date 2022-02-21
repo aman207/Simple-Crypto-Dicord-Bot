@@ -1,80 +1,77 @@
-from tokenize import String
+#from tokenize import String
 import discord
-from typing import Type
+#from typing import Type
 import matplotlib.pyplot as plt
 from pycoingecko import CoinGeckoAPI
-import json
+#import json
 import pandas as pd
 from datetime import datetime
-import requests
-from discord.ext import commands 
-from xrpl import account
-from xrpl.clients import JsonRpcClient
-from xrpl.wallet import generate_faucet_wallet
-from xrpl.models.requests.account_info import AccountInfo
+#import requests
+from discord.ext import commands
+import uuid
+import pathlib
+import os
 
 cg = CoinGeckoAPI()
 client = discord.Client()
 bot = commands.Bot(command_prefix="$")
-repository = "https://github.com/
-/Simple-Crypto-Dicord-Bot"
-
-response = requests.get("https://newsapi.org/v2/everything?q=crypto&apiKey={insert your own api key}")
-data = json.loads(response.text)
-
-all_articles = data['articles']
+currentDirectory = pathlib.Path(__file__).parent.resolve()
 
 def get_crypto_chart(token):
-        chart_data = cg.get_coin_market_chart_by_id(id=f'{token}', vs_currency='gbp', days='7')
+    chart_data = cg.get_coin_market_chart_by_id(id=f'{token}', vs_currency='usd', days='7')
+    UUID = uuid.uuid4()
+    imagesDir = os.path.join(currentDirectory, "images")
+    if not (os.path.isdir(imagesDir)):
+        os.makedirs(imagesDir)
+        print ("created directory: " + imagesDir)
+    filename = os.path.join(imagesDir, str(UUID)+".png")
 
-        def unix_to_date(unix_time):
-            timestamp = datetime.fromtimestamp((unix_time/1000))
-            return f"{timestamp.strftime('%d-%m-%Y %H:%M:%S')}"
+    def unix_to_date(unix_time):
+        timestamp = datetime.fromtimestamp((unix_time/1000))
+        return f"{timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
+    new_data = {}
 
-        new_data = {}
+    for each in chart_data['prices']:
+        date = unix_to_date(each[0])
+        new_data[date] = each[1]
 
-        for each in chart_data['prices']:
-            date = unix_to_date(each[0])
-            new_data[date] = each[1]
+    df = pd.DataFrame({'Dates': new_data.keys(), 'Prices': new_data.values()})
+    print(df.head())
 
-        df = pd.DataFrame({'Dates': new_data.keys(), 'Prices': new_data.values()})
-        print(df.head())
+    df.plot(x ='Dates', y='Prices', kind = 'line', legend = None)
+    
+    plt.title(f'7-day historical market price of {token}', fontsize=15, color= 'white', fontweight='bold')
+    plt.xticks(rotation=45, color='white')
+    plt.yticks(color='white')
+    
 
-        df.plot(x ='Dates', y='Prices', kind = 'line', legend = None)	
-        plt.axis('off')
-        plt.title(f'7-day historical market price of {token}', fontsize=15, color= 'white', fontweight='bold');
+    plt.savefig(filename, transparent=True, bbox_inches="tight")
 
-
-        filename =  "/Users/coldbio/Desktop/test.png"
-        plt.savefig(filename, transparent=True)
-
-        plt.close()
-
-
-
+    plt.close()
+    return filename
 
 class Coin:
     def __init__(self, name):
         self.name = name.lower()
         
-        self.coin_data = cg.get_coins_markets(vs_currency='gbp', ids=f'{self.name}')
+        self.coin_data = cg.get_coins_markets(vs_currency='usd', ids=f'{self.name}')
         
         self.coin_name = self.coin_data[0]['name']
         self.coin_image = self.coin_data[0]["image"]
-        self.coin_price = "£{:,}".format(self.coin_data[0]['current_price'])
+        self.coin_price = "${:,}".format(self.coin_data[0]['current_price'])
 
         self.coin_circulating_supply = "{:,}".format(self.coin_data[0]["circulating_supply"])
         self.coin_market_cap = "{:,}".format(self.coin_data[0]['market_cap'])
 
-        self.coin_high_24h = "£{:,}".format(self.coin_data[0]['high_24h'])
-        self.coin_low_24h = "£{:,}".format(self.coin_data[0]['low_24h'])
+        self.coin_high_24h = "${:,}".format(self.coin_data[0]['high_24h'])
+        self.coin_low_24h = "${:,}".format(self.coin_data[0]['low_24h'])
 
         self.coin_price_change_percent = "{:,}%".format(round(self.coin_data[0]['price_change_percentage_24h'], 2))
         
-        self.coin_ath_price = "£{:,}".format(self.coin_data[0]["ath"])
+        self.coin_ath_price = "${:,}".format(self.coin_data[0]["ath"])
         self.coin_ath_change_percent = "{:,}%".format(self.coin_data[0]["ath_change_percentage"])
-        self.coin_atl = "£{:,}".format(self.coin_data[0]["atl"])
+        self.coin_atl = "${:,}".format(self.coin_data[0]["atl"])
 
 
 
@@ -109,7 +106,6 @@ ended_ico_data = None
 upcoming_ico_data = market_percent_data["upcoming_icos"]
 ongoing_ico_data = market_percent_data["ongoing_icos"]
 ended_ico_data = market_percent_data["ended_icos"]
-
 
 market_cap_percentage_data = cg.get_search_trending()
 market_cap_percentage = []
@@ -146,25 +142,8 @@ async def on_message(message):
     if message.content.startswith("$market_dominance"):
         await message.channel.send(f"Market Cap Percentage\n-------------------------------------\n{market_dom}")
         
-    if message.content.startswith("$about"):
-        await message.channel.send(f"Thank you for using this discord bot.\nTo view how I was made visit here: {repository}")
-
-
-    # New feature:- Return the top 5 news articles related to crypto from the NewAPI.
-    # One small issue is that the articles will remain the same until the bot is reloaded.
-    # Once reloadedm it fetches new articles if there are any from the API
-    if message.content.startswith('$news'):
-        count = 0
-        await message.channel.send(f"Hey! {author.user.name}, check your DMs for the todays Top 5 news articles")
-        for each in all_articles:
-            count += 1
-            await message.author.send(f"**{count}:- {each['title']}**\n*{each['content']}*\n{each['url']}")
-            if count == 5:
-                break
-    
-
     if message.content.startswith('$btc'):
-        get_crypto_chart('bitcoin')
+        imagePath = get_crypto_chart('bitcoin')
         
         #### Create the initial embed object ####
         embed=discord.Embed(title=f"{btc.coin_name}")
@@ -176,7 +155,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value=btc.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= btc.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{btc.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${btc.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= btc.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= btc.coin_low_24h, inline=True)
@@ -185,17 +164,19 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= btc.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= btc.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = btc.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
+        file = discord.File(imagePath, filename="image.png")
 
         embed.set_image(url="attachment://image.png")
 
-        embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
-
         await message.channel.send(file=file, embed=embed)
+
+        try:
+            os.remove(imagePath)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
     if message.content.startswith('$xrp'):
         get_crypto_chart('ripple')
-        
 
         #### Create the initial em 
         embed=discord.Embed(title=f"{xrp.coin_name}")
@@ -207,7 +188,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= xrp.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= xrp.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{xrp.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${xrp.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= xrp.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= xrp.coin_low_24h, inline=True)
@@ -238,7 +219,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value = eth.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= eth.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{eth.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${eth.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= eth.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= eth.coin_low_24h, inline=True)
@@ -268,7 +249,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= link.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= link.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{link.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${link.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= link.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= link.coin_low_24h, inline=True)
@@ -299,7 +280,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= ada.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= ada.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{ada.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${ada.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= ada.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= ada.coin_low_24h, inline=True)
@@ -329,7 +310,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= avax.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= avax.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{avax.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${avax.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= avax.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= avax.coin_low_24h, inline=True)
@@ -359,7 +340,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= doge.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= doge.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{doge.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${doge.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= doge.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= doge.coin_low_24h, inline=True)
@@ -390,7 +371,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= vet.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= vet.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{vet.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${vet.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= vet.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= vet.coin_low_24h, inline=True)
@@ -421,7 +402,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= filecoin.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= filecoin.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{filecoin.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${filecoin.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= filecoin.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= filecoin.coin_low_24h, inline=True)
@@ -454,7 +435,7 @@ async def on_message(message):
 
         embed.add_field(name="Current Price 💵", value= qnt.coin_price, inline=True)
         embed.add_field(name="Circulating Supply 🪙", value= qnt.coin_circulating_supply, inline=True)
-        embed.add_field(name="Market Cap 🤑", value= f"£{qnt.coin_market_cap}", inline=True)
+        embed.add_field(name="Market Cap 🤑", value= f"${qnt.coin_market_cap}", inline=True)
 
         embed.add_field(name="24h-High ⬆️", value= qnt.coin_high_24h, inline=True)
         embed.add_field(name="24h-low ⬇️", value= qnt.coin_low_24h, inline=True)
@@ -473,4 +454,4 @@ async def on_message(message):
         await message.channel.send(file=file, embed=embed)
 
 
-client.run("{insert your own bot token here}")
+client.run("OTQ1MzU5Nzg4MDI2NTE5NjQ0.YhPA6Q.gFYKCPICdwInRWS-8MiCE7izk3I")
