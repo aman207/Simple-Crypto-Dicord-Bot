@@ -1,4 +1,3 @@
-from xml.sax.handler import DTDHandler
 import discord
 from discord.ext import commands
 from discord.ext import tasks
@@ -9,8 +8,6 @@ from datetime import datetime
 import uuid
 import pathlib
 import os
-
-from sqlalchemy import DDL
 
 cg = CoinGeckoAPI()
 client = discord.Client()
