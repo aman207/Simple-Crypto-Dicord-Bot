@@ -454,4 +454,4 @@ async def on_message(message):
         await message.channel.send(file=file, embed=embed)
 
 
-client.run("OTQ1MzU5Nzg4MDI2NTE5NjQ0.YhPA6Q.gFYKCPICdwInRWS-8MiCE7izk3I")
+client.run("token")
