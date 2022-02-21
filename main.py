@@ -1,6 +1,4 @@
-from tokenize import String
 import discord
-from typing import Type
 import matplotlib.pyplot as plt
 from pycoingecko import CoinGeckoAPI
 import json
@@ -8,16 +6,14 @@ import pandas as pd
 from datetime import datetime
 import requests
 from discord.ext import commands 
-from xrpl import account
-from xrpl.clients import JsonRpcClient
-from xrpl.wallet import generate_faucet_wallet
-from xrpl.models.requests.account_info import AccountInfo
+import uuid
+import pathlib
+import os
 
 cg = CoinGeckoAPI()
 client = discord.Client()
 bot = commands.Bot(command_prefix="$")
-repository = "https://github.com/
-/Simple-Crypto-Dicord-Bot"
+repository = "https://github.com/Simple-Crypto-Dicord-Bot"
 
 response = requests.get("https://newsapi.org/v2/everything?q=crypto&apiKey={insert your own api key}")
 data = json.loads(response.text)
@@ -26,6 +22,8 @@ all_articles = data['articles']
 
 def get_crypto_chart(token):
         chart_data = cg.get_coin_market_chart_by_id(id=f'{token}', vs_currency='gbp', days='7')
+        UUID = uuid.uuid4()
+        currentDirectory = pathlib.Path(__file__).parent.resolve()
 
         def unix_to_date(unix_time):
             timestamp = datetime.fromtimestamp((unix_time/1000))
@@ -43,14 +41,13 @@ def get_crypto_chart(token):
 
         df.plot(x ='Dates', y='Prices', kind = 'line', legend = None)	
         plt.axis('off')
-        plt.title(f'7-day historical market price of {token}', fontsize=15, color= 'white', fontweight='bold');
+        plt.title(f'7-day historical market price of {token}', fontsize=15, color= 'white', fontweight='bold')
 
-
-        filename =  "/Users/coldbio/Desktop/test.png"
+        filename = os.path.join(currentDirectory,str(UUID)+".png")
         plt.savefig(filename, transparent=True)
 
         plt.close()
-
+        return filename
 
 
 
@@ -164,7 +161,7 @@ async def on_message(message):
     
 
     if message.content.startswith('$btc'):
-        get_crypto_chart('bitcoin')
+        filename = get_crypto_chart('bitcoin')
         
         #### Create the initial embed object ####
         embed=discord.Embed(title=f"{btc.coin_name}")
@@ -185,7 +182,7 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= btc.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= btc.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = btc.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
+        file = discord.File(filename, filename="image.png")
 
         embed.set_image(url="attachment://image.png")
 
@@ -193,9 +190,13 @@ async def on_message(message):
 
         await message.channel.send(file=file, embed=embed)
 
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
+
     if message.content.startswith('$xrp'):
-        get_crypto_chart('ripple')
-        
+        filename = get_crypto_chart('ripple')
 
         #### Create the initial em 
         embed=discord.Embed(title=f"{xrp.coin_name}")
@@ -216,17 +217,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= xrp.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= xrp.coin_ath_change_percent , inline=True)
         embed.add_field(name="ATL 😢", value = xrp.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
-
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
     if message.content.startswith('$eth'):
-        get_crypto_chart('ethereum')
+        filename = get_crypto_chart('ethereum')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{eth.coin_name}")
@@ -247,17 +252,22 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= eth.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= eth.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = eth.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
+        file = discord.File(filename, filename="image.png")
 
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
     
     if message.content.startswith('$link'):
-        get_crypto_chart('chainlink')
+        filename = get_crypto_chart('chainlink')
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{link.coin_name}")
 
@@ -278,16 +288,21 @@ async def on_message(message):
         embed.add_field(name="ATH Percent Change 📊", value=link.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = link.coin_atl, inline=True)
 
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
     
     if message.content.startswith('$ada'):
-        get_crypto_chart('cardano')
+        filename = get_crypto_chart('cardano')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{ada.coin_name}")
@@ -308,16 +323,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= ada.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= ada.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = ada.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
     if message.content.startswith('$avax'):
-        get_crypto_chart('avalanche-2')
+        filename = get_crypto_chart('avalanche-2')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{avax.coin_name}")
@@ -338,16 +358,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= avax.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= avax.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = avax.coin_atl, inline=True)
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
     if message.content.startswith('$doge'):
-        get_crypto_chart('dogecoin')
+        filename = get_crypto_chart('dogecoin')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{doge.coin_name}")
@@ -368,17 +393,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= doge.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= doge.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = doge.coin_atl, inline=True)
+        file = discord.File(filename, filename="image.png")
         
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
     
     if message.content.startswith('$vet'):
-        get_crypto_chart('vechain')
+        filename = get_crypto_chart('vechain')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{vet.coin_name}")
@@ -399,18 +428,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= vet.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= vet.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = vet.coin_atl, inline=True)
-
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
-
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
     
     if message.content.startswith('$filecoin'):
-        get_crypto_chart('filecoin')
+        filename = get_crypto_chart('filecoin')
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{filecoin.coin_name}")
 
@@ -430,19 +462,21 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= filecoin.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= filecoin.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = filecoin.coin_atl, inline=True)
-
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
-
-
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
     
     if message.content.startswith('$qnt'):
-        get_crypto_chart('quant-network')
+        filename = get_crypto_chart('quant-network')
         
         #### Create the initial embed object #eth
         embed=discord.Embed(title=f"{qnt.coin_name}")
@@ -463,14 +497,17 @@ async def on_message(message):
         embed.add_field(name="All Time High 👑", value= qnt.coin_ath_price, inline=True)
         embed.add_field(name="ATH Percent Change 📊", value= qnt.coin_ath_change_percent, inline=True)
         embed.add_field(name="ATL 😢", value = qnt.coin_atl, inline=True)
-
-        file = discord.File("/Users/coldbio/Desktop/test.png", filename="image.png")
-
+        file = discord.File(filename, filename="image.png")
+        
         embed.set_image(url="attachment://image.png")
 
         embed.set_footer(text="Thank you for using Crypto Bot Price Checker 🙏")
 
         await message.channel.send(file=file, embed=embed)
-
+        
+        try:
+            os.remove(filename)
+        except OSError as e:
+            print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
 client.run("{insert your own bot token here}")
