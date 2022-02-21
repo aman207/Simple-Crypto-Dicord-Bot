@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 from discord.ext import tasks
 import matplotlib.pyplot as plt
 from pycoingecko import CoinGeckoAPI
@@ -11,7 +10,6 @@ import os
 
 cg = CoinGeckoAPI()
 client = discord.Client()
-bot = commands.Bot(command_prefix="$")
 currentDirectory = pathlib.Path(__file__).parent.resolve()
 
 def get_crypto_chart(token):
