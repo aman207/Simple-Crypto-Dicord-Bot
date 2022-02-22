@@ -10,26 +10,26 @@ import os
 
 cg = CoinGeckoAPI()
 client = discord.Client()
-currentDirectory = pathlib.Path(__file__).parent.resolve()
+current_directory = pathlib.Path(__file__).parent.resolve()
 
 async def search_by_ID(id):
-    return next((item for item in coinsList if item['id'].lower() == id.lower()), False)
+    return next((item for item in coins_list if item['id'].lower() == id.lower()), False)
 
 async def search_by_symbol(symbol):
-    return next((item for item in coinsList if item['symbol'].lower() == symbol.lower()), False)
+    return next((item for item in coins_list if item['symbol'].lower() == symbol.lower()), False)
 
 def update_coins_list():
-    global coinsList
-    coinsList = cg.get_coins_list()
+    global coins_list
+    coins_list = cg.get_coins_list()
 
 def get_crypto_chart(token):
     chart_data = cg.get_coin_market_chart_by_id(id=f'{token}', vs_currency='usd', days='7')
     UUID = uuid.uuid4()
-    imagesDir = os.path.join(currentDirectory, "images")
-    if not (os.path.isdir(imagesDir)):
-        os.makedirs(imagesDir)
-        print ("created directory: " + imagesDir)
-    filename = os.path.join(imagesDir, str(UUID)+".png")
+    images_dir = os.path.join(current_directory, "images")
+    if not (os.path.isdir(images_dir)):
+        os.makedirs(images_dir)
+        print ("created directory: " + images_dir)
+    filename = os.path.join(images_dir, str(UUID)+".png")
 
     def unix_to_date(unix_time):
         timestamp = datetime.fromtimestamp((unix_time/1000))
@@ -53,45 +53,45 @@ def get_crypto_chart(token):
     plt.close()
     return filename
 
-async def send_coin_message(coinName, message):
-    checkingMessage = await message.channel.send("Checking...")
+async def send_coin_message(coin_name, message):
+    checking_message = await message.channel.send("Checking...")
 
-    symbolSearchResult = await search_by_symbol(coinName)
-    if symbolSearchResult is False:
-        idSearchResult = await search_by_ID(coinName)
-        if idSearchResult is False:
-            await checkingMessage.edit(content="Could not find coin by ID or symbol")
+    symbol_search_result = await search_by_symbol(coin_name)
+    if symbol_search_result is False:
+        id_search_result = await search_by_ID(coin_name)
+        if id_search_result is False:
+            await checking_message.edit(content="Could not find coin by ID or symbol")
             pass
         else:
-            coinObject = Coin(idSearchResult['id'])
-            #print(f"Found this coin by ID: {idSearchResult['name']}")
+            coin_object = Coin(id_search_result['id'])
+            #print(f"Found this coin by ID: {id_search_result['name']}")
     else:
-        coinObject = Coin(symbolSearchResult['id'])
-        #print(f"Found this coin by symbol: {symbolSearchResult['name']}")
+        coin_object = Coin(symbol_search_result['id'])
+        #print(f"Found this coin by symbol: {symbol_search_result['name']}")
 
     #### Create the embed object ####
-    embed = discord.Embed(title=f"{coinObject.coin_name}")
+    embed = discord.Embed(title=f"{coin_object.coin_name}")
     embed.set_author(name=f"{client.user.name}", icon_url=client.user.avatar_url)
-    embed.set_thumbnail(url=f"{coinObject.coin_image}")
-    embed.add_field(name="Current Price 💵", value=coinObject.coin_price, inline=True)
-    embed.add_field(name="Circulating Supply 🪙", value= coinObject.coin_circulating_supply, inline=True)
-    embed.add_field(name="Market Cap 🤑", value= f"${coinObject.coin_market_cap}", inline=True)
-    embed.add_field(name="24h-High ⬆️", value= coinObject.coin_high_24h, inline=True)
-    embed.add_field(name="24h-low ⬇️", value= coinObject.coin_low_24h, inline=True)
-    embed.add_field(name="Price Change 24h ⏰", value= coinObject.coin_price_change_percent, inline=True)
-    embed.add_field(name="All Time High 👑", value= coinObject.coin_ath_price, inline=True)
-    embed.add_field(name="ATH Percent Change 📊", value= coinObject.coin_ath_change_percent, inline=True)
-    embed.add_field(name="ATL 😢", value = coinObject.coin_atl, inline=True)
+    embed.set_thumbnail(url=f"{coin_object.coin_image}")
+    embed.add_field(name="Current Price 💵", value=coin_object.coin_price, inline=True)
+    embed.add_field(name="Circulating Supply 🪙", value= coin_object.coin_circulating_supply, inline=True)
+    embed.add_field(name="Market Cap 🤑", value= f"${coin_object.coin_market_cap}", inline=True)
+    embed.add_field(name="24h-High ⬆️", value= coin_object.coin_high_24h, inline=True)
+    embed.add_field(name="24h-low ⬇️", value= coin_object.coin_low_24h, inline=True)
+    embed.add_field(name="Price Change 24h ⏰", value= coin_object.coin_price_change_percent, inline=True)
+    embed.add_field(name="All Time High 👑", value= coin_object.coin_ath_price, inline=True)
+    embed.add_field(name="ATH Percent Change 📊", value= coin_object.coin_ath_change_percent, inline=True)
+    embed.add_field(name="ATL 😢", value = coin_object.coin_atl, inline=True)
     
-    imagePath = get_crypto_chart(coinObject.name)
-    file = discord.File(imagePath, filename="image.png")
+    image_path = get_crypto_chart(coin_object.name)
+    file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
 
     await message.channel.send(file=file, embed=embed)
-    await checkingMessage.delete()
+    await checking_message.delete()
 
     try:
-        os.remove(imagePath)
+        os.remove(image_path)
     except OSError as e:
         print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
