@@ -161,6 +161,7 @@ $market_dominance""")
         trending_coins = ''.join(trending_tokens)
 
         await message.channel.send(f"Top 7 trending search coins\n-------------------------------------\n{trending_coins}")
+        return
 
     if message.content.startswith("$market_dominance"):
         market_percent_data = cg.get_global()
@@ -172,8 +173,10 @@ $market_dominance""")
         market_dom = ''.join(market_cap_percentage)
 
         await message.channel.send(f"Market Cap Percentage\n-------------------------------------\n{market_dom}")
+        return
 
     if message.content.startswith('$'):
         await send_coin_message(message.content[1:], message)
+        return
 
 client.run("token")
