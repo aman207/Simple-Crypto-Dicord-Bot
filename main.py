@@ -126,7 +126,8 @@ async def check_rates():
         )
     )
 
-@tasks.loop(minutes=3600)
+#Update coins list once per day
+@tasks.loop(minutes=1440)
 async def coins_list_task():
     update_coins_list()
 
