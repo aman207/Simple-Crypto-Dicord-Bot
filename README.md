@@ -1,7 +1,7 @@
 ## Simple Crypto Dicord Bot
 A simple discord crypto bot that returns back the price of cryptocurrencies.
 
-All cryptocurrencies that Coingeko supports are supported by this bot
+All cryptocurrencies that CoinGecko supports are supported by this bot
 
 ## Installation
 Before running the code make sure to install the required packages
