@@ -1,20 +1,6 @@
 ## Simple Crypto Dicord Bot
-A simple discord crypto bot that returns back the price of a limited set of cryptocurrency prices.
-Currently available crypto prices:
-- XRP
-- Bitcoin
-- Ethereum
-- Chainlink
-- Vechain
-- Avalanche
-- Cardano
-- Dogecoin
-- Filecoin
-- Quant
-- Algorand
-
-## Motivation
-I created this rather simple discord bot to provide convenient crypto related data for me and my friends on our shared discord server  
+A simple discord crypto bot that returns back the price of cryptocurrencies.
+All cryptocurrencies that Coingeko supports are supported by this bot
 
 ## Installation
 Before running the code make sure to install the required packages
@@ -25,7 +11,6 @@ pip3 install -r requirements.txt
 
 ## Commands
 - `$help`:- Informes the user which coins/tokens are supported and how to call their prices
-- `$about`:- Where to find the source code and who the creater is
 - `$trending`:- Provides the top 7 trending search coins/tokens 
 - `$market_dominance`:- Returns a list of the most dominant coins in terms of overall market cap percentage
 
