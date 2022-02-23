@@ -10,10 +10,13 @@ Before running the code make sure to install the required packages
 pip3 install -r requirements.txt
 ```
 
+Create a new application on the Discord developers portal and create a bot token. Paste your token at the end of `main.py`
+
 ## Commands
-- `$help`:- Informes the user which coins/tokens are supported and how to call their prices
-- `$trending`:- Provides the top 7 trending search coins/tokens 
-- `$market_dominance`:- Returns a list of the most dominant coins in terms of overall market cap percentage
+- `${coin}`: Enter your coin by name or symbol preceeded by a `$`. Example `$bitcoin` or `$btc`
+- `$help`: Informes the user which coins/tokens are supported and how to call their prices
+- `$trending`: Provides the top 7 trending search coins/tokens 
+- `$market_dominance`: Returns a list of the most dominant coins in terms of overall market cap percentage
 
 ## Demo
 XRP |  Bitcoin
