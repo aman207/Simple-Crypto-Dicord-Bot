@@ -8,10 +8,11 @@ import uuid
 import pathlib
 import os
 from dotenv import load_dotenv
+from aiohttp import ClientSession
 
 load_dotenv()
 client = discord.Client()
-cg = AsyncCoinGeckoAPISession()
+
 current_directory = pathlib.Path(__file__).parent.resolve()
 
 async def search_by_ID(id):
@@ -116,8 +117,13 @@ async def coin(name):
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
+    await initalize_cg()
     check_rates.start()
     coins_list_task.start()
+
+async def initalize_cg():
+    global cg
+    cg = AsyncCoinGeckoAPISession(client_session=ClientSession())
 
 @tasks.loop(minutes=1)
 async def check_rates():
