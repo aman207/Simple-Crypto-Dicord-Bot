@@ -9,6 +9,7 @@ import pathlib
 import os
 
 client = discord.Client()
+cg = AsyncCoinGeckoAPISession()
 current_directory = pathlib.Path(__file__).parent.resolve()
 
 async def search_by_ID(id):
@@ -19,12 +20,10 @@ async def search_by_symbol(symbol):
 
 async def update_coins_list():
     global coins_list
-    async with AsyncCoinGeckoAPISession() as cg:
-        coins_list = await cg.get_coins_list()
+    coins_list = await cg.get_coins_list()
 
 async def get_crypto_chart(token):
-    async with AsyncCoinGeckoAPISession() as cg:
-        chart_data = await cg.get_coin_market_chart_by_id(coin_id=f'{token}', vs_currency='usd', days='7')
+    chart_data = await cg.get_coin_market_chart_by_id(coin_id=f'{token}', vs_currency='usd', days='7')
     UUID = uuid.uuid4()
     images_dir = os.path.join(current_directory, "images")
     if not (os.path.isdir(images_dir)):
@@ -98,8 +97,7 @@ async def send_coin_message(coin_name, message):
 async def coin(name):
     name = name.lower()
     coin_return = {}
-    async with AsyncCoinGeckoAPISession() as cg:
-        coin_return["coin_data"] = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
+    coin_return["coin_data"] = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
     coin_return["coin_name"] = coin_return["coin_data"][0]['name']
     coin_return["coin_image"] = coin_return["coin_data"][0]["image"]
     coin_return["coin_price"] = "${:,}".format(coin_return["coin_data"][0]['current_price'])
@@ -121,13 +119,12 @@ async def on_ready():
 
 @tasks.loop(minutes=1)
 async def check_rates():
-    async with AsyncCoinGeckoAPISession() as cg:
-        await client.change_presence(
-            activity=discord.Activity(
-                type=discord.ActivityType.watching, 
-                name="BTC @ $" + str((await cg.get_price(ids="bitcoin", vs_currencies="usd"))['bitcoin']['usd'])
-            )
+    await client.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching, 
+            name="BTC @ $" + str((await cg.get_price(ids="bitcoin", vs_currencies="usd"))['bitcoin']['usd'])
         )
+    )
 
 #Update coins list once per day
 @tasks.loop(minutes=1440)
@@ -155,8 +152,7 @@ $market_dominance""")
         return
 
     if message.content.startswith("$trending"):
-        async with AsyncCoinGeckoAPISession() as cg:
-            trending_data = await cg.get_search_trending()
+        trending_data = await cg.get_search_trending()
         trending_tokens = []
         count_1 = 1
         for each in trending_data["coins"]:
@@ -169,8 +165,7 @@ $market_dominance""")
         return
 
     if message.content.startswith("$market_dominance"):
-        async with AsyncCoinGeckoAPISession() as cg:
-            market_percent_data = await cg.get_global()
+        market_percent_data = await cg.get_global()
         market_cap_percentage = []
         count_2 = 1
         for k, v in market_percent_data["market_cap_percentage"].items():
