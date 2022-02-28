@@ -10,7 +10,7 @@ Before running the code make sure to install the required packages
 pip3 install -r requirements.txt
 ```
 
-Create a new application on the Discord developers portal and create a bot token. Paste your token at the end of `main.py`
+Create a new application on the Discord developers portal and create a bot token. Paste your token in the `.env` file or set the `DISCORD_CRYPTO_TOKEN` environemnt variable
 
 ## Commands
 - `${coin}`: Enter your coin by name or symbol preceeded by a `$`. Example `$bitcoin` or `$btc`

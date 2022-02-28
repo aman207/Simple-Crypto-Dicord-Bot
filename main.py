@@ -7,7 +7,9 @@ from datetime import datetime
 import uuid
 import pathlib
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
 client = discord.Client()
 current_directory = pathlib.Path(__file__).parent.resolve()
 
@@ -185,4 +187,4 @@ $market_dominance""")
         await send_coin_message(message.content[1:], message)
         return
 
-client.run("token")
+client.run(os.getenv('DISCORD_CRYPTO_TOKEN'))
