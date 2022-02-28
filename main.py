@@ -1,14 +1,13 @@
 import discord
 from discord.ext import tasks
 import matplotlib.pyplot as plt
-from pycoingecko import CoinGeckoAPI
+from aiocoingecko import AsyncCoinGeckoAPISession
 import pandas as pd
 from datetime import datetime
 import uuid
 import pathlib
 import os
 
-cg = CoinGeckoAPI()
 client = discord.Client()
 current_directory = pathlib.Path(__file__).parent.resolve()
 
@@ -18,12 +17,14 @@ async def search_by_ID(id):
 async def search_by_symbol(symbol):
     return next((item for item in coins_list if item['symbol'].lower() == symbol.lower()), False)
 
-def update_coins_list():
+async def update_coins_list():
     global coins_list
-    coins_list = cg.get_coins_list()
+    async with AsyncCoinGeckoAPISession() as cg:
+        coins_list = await cg.get_coins_list()
 
-def get_crypto_chart(token):
-    chart_data = cg.get_coin_market_chart_by_id(id=f'{token}', vs_currency='usd', days='7')
+async def get_crypto_chart(token):
+    async with AsyncCoinGeckoAPISession() as cg:
+        chart_data = await cg.get_coin_market_chart_by_id(coin_id=f'{token}', vs_currency='usd', days='7')
     UUID = uuid.uuid4()
     images_dir = os.path.join(current_directory, "images")
     if not (os.path.isdir(images_dir)):
@@ -55,7 +56,6 @@ def get_crypto_chart(token):
 
 async def send_coin_message(coin_name, message):
     checking_message = await message.channel.send("Checking...")
-
     symbol_search_result = await search_by_symbol(coin_name)
     if symbol_search_result is False:
         id_search_result = await search_by_ID(coin_name)
@@ -63,27 +63,27 @@ async def send_coin_message(coin_name, message):
             await checking_message.edit(content="Could not find coin by ID or symbol")
             pass
         else:
-            coin_object = Coin(id_search_result['id'])
+            coin_return = await coin(id_search_result['id'])
             #print(f"Found this coin by ID: {id_search_result['name']}")
     else:
-        coin_object = Coin(symbol_search_result['id'])
+        coin_return = await coin(symbol_search_result['id'])
         #print(f"Found this coin by symbol: {symbol_search_result['name']}")
 
     #### Create the embed object ####
-    embed = discord.Embed(title=f"{coin_object.coin_name}")
+    embed = discord.Embed(title=f"{coin_return['coin_name']}")
     embed.set_author(name=f"{client.user.name}", icon_url=client.user.avatar_url)
-    embed.set_thumbnail(url=f"{coin_object.coin_image}")
-    embed.add_field(name="Current Price 💵", value=coin_object.coin_price, inline=True)
-    embed.add_field(name="Circulating Supply 🪙", value= coin_object.coin_circulating_supply, inline=True)
-    embed.add_field(name="Market Cap 🤑", value= f"${coin_object.coin_market_cap}", inline=True)
-    embed.add_field(name="24h-High ⬆️", value= coin_object.coin_high_24h, inline=True)
-    embed.add_field(name="24h-low ⬇️", value= coin_object.coin_low_24h, inline=True)
-    embed.add_field(name="Price Change 24h ⏰", value= coin_object.coin_price_change_percent, inline=True)
-    embed.add_field(name="All Time High 👑", value= coin_object.coin_ath_price, inline=True)
-    embed.add_field(name="ATH Percent Change 📊", value= coin_object.coin_ath_change_percent, inline=True)
-    embed.add_field(name="ATL 😢", value = coin_object.coin_atl, inline=True)
+    embed.set_thumbnail(url=f"{coin_return['coin_image']}")
+    embed.add_field(name="Current Price 💵", value=coin_return['coin_price'], inline=True)
+    embed.add_field(name="Circulating Supply 🪙", value= coin_return['coin_circulating_supply'], inline=True)
+    embed.add_field(name="Market Cap 🤑", value= f"${coin_return['coin_market_cap']}", inline=True)
+    embed.add_field(name="24h-High ⬆️", value= coin_return['coin_high_24h'], inline=True)
+    embed.add_field(name="24h-low ⬇️", value= coin_return['coin_low_24h'], inline=True)
+    embed.add_field(name="Price Change 24h ⏰", value= coin_return['coin_price_change_percent'], inline=True)
+    embed.add_field(name="All Time High 👑", value= coin_return['coin_ath_price'], inline=True)
+    embed.add_field(name="ATH Percent Change 📊", value= coin_return['coin_ath_change_percent'], inline=True)
+    embed.add_field(name="ATL 😢", value = coin_return['coin_atl'], inline=True)
     
-    image_path = get_crypto_chart(coin_object.name)
+    image_path = await get_crypto_chart(coin_return['coin_name'].lower())
     file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
 
@@ -95,21 +95,23 @@ async def send_coin_message(coin_name, message):
     except OSError as e:
         print ("Error deleting file: %s - %s." % (e.filename, e.strerror))
 
-class Coin:
-    def __init__(self, name):
-        self.name = name.lower()
-        self.coin_data = cg.get_coins_markets(vs_currency='usd', ids=f'{self.name}')
-        self.coin_name = self.coin_data[0]['name']
-        self.coin_image = self.coin_data[0]["image"]
-        self.coin_price = "${:,}".format(self.coin_data[0]['current_price'])
-        self.coin_circulating_supply = "{:,}".format(self.coin_data[0]["circulating_supply"])
-        self.coin_market_cap = "{:,}".format(self.coin_data[0]['market_cap'])
-        self.coin_high_24h = "${:,}".format(self.coin_data[0]['high_24h'])
-        self.coin_low_24h = "${:,}".format(self.coin_data[0]['low_24h'])
-        self.coin_price_change_percent = "{:,}%".format(round(self.coin_data[0]['price_change_percentage_24h'], 2))
-        self.coin_ath_price = "${:,}".format(self.coin_data[0]["ath"])
-        self.coin_ath_change_percent = "{:,}%".format(self.coin_data[0]["ath_change_percentage"])
-        self.coin_atl = "${:,}".format(self.coin_data[0]["atl"])
+async def coin(name):
+    name = name.lower()
+    coin_return = {}
+    async with AsyncCoinGeckoAPISession() as cg:
+        coin_return["coin_data"] = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
+    coin_return["coin_name"] = coin_return["coin_data"][0]['name']
+    coin_return["coin_image"] = coin_return["coin_data"][0]["image"]
+    coin_return["coin_price"] = "${:,}".format(coin_return["coin_data"][0]['current_price'])
+    coin_return["coin_circulating_supply"] = "{:,}".format(coin_return["coin_data"][0]["circulating_supply"])
+    coin_return["coin_market_cap"] = "{:,}".format(coin_return["coin_data"][0]['market_cap'])
+    coin_return["coin_high_24h"] = "${:,}".format(coin_return["coin_data"][0]['high_24h'])
+    coin_return["coin_low_24h"] = "${:,}".format(coin_return["coin_data"][0]['low_24h'])
+    coin_return["coin_price_change_percent"] = "{:,}%".format(round(coin_return["coin_data"][0]['price_change_percentage_24h'], 2))
+    coin_return["coin_ath_price"] = "${:,}".format(coin_return["coin_data"][0]["ath"])
+    coin_return["coin_ath_change_percent"] = "{:,}%".format(coin_return["coin_data"][0]["ath_change_percentage"])
+    coin_return["coin_atl"] = "${:,}".format(coin_return["coin_data"][0]["atl"])
+    return coin_return
 
 @client.event
 async def on_ready():
@@ -119,17 +121,19 @@ async def on_ready():
 
 @tasks.loop(minutes=1)
 async def check_rates():
-    await client.change_presence(
-        activity=discord.Activity(
-            type=discord.ActivityType.watching, 
-            name="BTC @ $" + str(cg.get_price(ids="bitcoin", vs_currencies="usd")['bitcoin']['usd'])
+    async with AsyncCoinGeckoAPISession() as cg:
+        await client.change_presence(
+            activity=discord.Activity(
+                type=discord.ActivityType.watching, 
+                name="BTC @ $" + str((await cg.get_price(ids="bitcoin", vs_currencies="usd"))['bitcoin']['usd'])
+            )
         )
-    )
 
 #Update coins list once per day
 @tasks.loop(minutes=1440)
 async def coins_list_task():
-    update_coins_list()
+    await update_coins_list()
+    print ("Updated coins list")
 
 @client.event
 async def on_message(message):
@@ -151,7 +155,8 @@ $market_dominance""")
         return
 
     if message.content.startswith("$trending"):
-        trending_data = cg.get_search_trending()
+        async with AsyncCoinGeckoAPISession() as cg:
+            trending_data = await cg.get_search_trending()
         trending_tokens = []
         count_1 = 1
         for each in trending_data["coins"]:
@@ -164,7 +169,8 @@ $market_dominance""")
         return
 
     if message.content.startswith("$market_dominance"):
-        market_percent_data = cg.get_global()
+        async with AsyncCoinGeckoAPISession() as cg:
+            market_percent_data = await cg.get_global()
         market_cap_percentage = []
         count_2 = 1
         for k, v in market_percent_data["market_cap_percentage"].items():
