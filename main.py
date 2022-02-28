@@ -118,7 +118,7 @@ async def coin(name):
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     await initalize_cg()
-    check_rates.start()
+    #check_rates.start()
     coins_list_task.start()
 
 async def initalize_cg():
