@@ -100,25 +100,25 @@ async def send_coin_message(coin_name, message):
 async def coin(name):
     name = name.lower()
     coin_return = {}
-    coin_return["coin_data"] = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
-    coin_return["coin_name"] = coin_return["coin_data"][0]['name']
-    coin_return["coin_image"] = coin_return["coin_data"][0]["image"]
-    coin_return["coin_price"] = "${:,}".format(coin_return["coin_data"][0]['current_price'])
-    coin_return["coin_circulating_supply"] = "{:,}".format(coin_return["coin_data"][0]["circulating_supply"])
-    coin_return["coin_market_cap"] = "{:,}".format(coin_return["coin_data"][0]['market_cap'])
-    coin_return["coin_high_24h"] = "${:,}".format(coin_return["coin_data"][0]['high_24h'])
-    coin_return["coin_low_24h"] = "${:,}".format(coin_return["coin_data"][0]['low_24h'])
-    coin_return["coin_price_change_percent"] = "{:,}%".format(round(coin_return["coin_data"][0]['price_change_percentage_24h'], 2))
-    coin_return["coin_ath_price"] = "${:,}".format(coin_return["coin_data"][0]["ath"])
-    coin_return["coin_ath_change_percent"] = "{:,}%".format(coin_return["coin_data"][0]["ath_change_percentage"])
-    coin_return["coin_atl"] = "${:,}".format(coin_return["coin_data"][0]["atl"])
+    coin_data = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
+    coin_return["coin_name"] = coin_data[0]['name']
+    coin_return["coin_image"] = coin_data[0]["image"]
+    coin_return["coin_price"] = "${:,}".format(coin_data[0]['current_price'])
+    coin_return["coin_circulating_supply"] = "{:,}".format(coin_data[0]["circulating_supply"])
+    coin_return["coin_market_cap"] = "{:,}".format(coin_data[0]['market_cap'])
+    coin_return["coin_high_24h"] = "${:,}".format(coin_data[0]['high_24h'])
+    coin_return["coin_low_24h"] = "${:,}".format(coin_data[0]['low_24h'])
+    coin_return["coin_price_change_percent"] = "{:,}%".format(round(coin_data[0]['price_change_percentage_24h'], 2))
+    coin_return["coin_ath_price"] = "${:,}".format(coin_data[0]["ath"])
+    coin_return["coin_ath_change_percent"] = "{:,}%".format(coin_data[0]["ath_change_percentage"])
+    coin_return["coin_atl"] = "${:,}".format(coin_data[0]["atl"])
     return coin_return
 
 @client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(client))
     await initalize_cg()
-    #check_rates.start()
+    check_rates.start()
     coins_list_task.start()
 
 async def initalize_cg():
