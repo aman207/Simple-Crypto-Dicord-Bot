@@ -63,7 +63,7 @@ async def send_coin_message(coin_name, message):
         id_search_result = await search_by_ID(coin_name)
         if id_search_result is False:
             await checking_message.edit(content="Could not find coin by ID or symbol")
-            pass
+            return
         else:
             coin_return = await coin(id_search_result['id'])
             #print(f"Found this coin by ID: {id_search_result['name']}")
@@ -175,7 +175,7 @@ $market_dominance""")
             market_percent_data = await cg.get_global()
         market_cap_percentage = []
         count_2 = 1
-        for k, v in market_percent_data["market_cap_percentage"].items():
+        for k, v in market_percent_data["data"]["market_cap_percentage"].items():
             market_cap_percentage.append(f"({count_2}). {k}: {round(v, 2)}% \n")
             count_2 += 1
         market_dom = ''.join(market_cap_percentage)
