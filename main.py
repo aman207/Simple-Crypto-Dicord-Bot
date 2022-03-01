@@ -85,7 +85,7 @@ async def send_coin_message(coin_name, message):
     embed.add_field(name="ATH Percent Change 📊", value= coin_return['coin_ath_change_percent'], inline=True)
     embed.add_field(name="ATL 😢", value = coin_return['coin_atl'], inline=True)
     
-    image_path = await get_crypto_chart(coin_return['coin_name'].lower())
+    image_path = await get_crypto_chart(coin_return['coin_id'])
     file = discord.File(image_path, filename="image.png")
     embed.set_image(url="attachment://image.png")
 
@@ -102,6 +102,7 @@ async def coin(name):
     coin_return = {}
     async with AsyncCoinGeckoAPISession() as cg:
         coin_return["coin_data"] = await cg.get_coins_markets(vs_currency='usd', ids=f'{name}')
+    coin_return["coin_id"] = coin_return["coin_data"][0]['id']
     coin_return["coin_name"] = coin_return["coin_data"][0]['name']
     coin_return["coin_image"] = coin_return["coin_data"][0]["image"]
     coin_return["coin_price"] = "${:,}".format(coin_return["coin_data"][0]['current_price'])
